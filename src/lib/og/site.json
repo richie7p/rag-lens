@@ -1,0 +1,5 @@
+{
+  "title": "RAG Lens",
+  "card": "custom",
+  "description": "Watch retrieval-augmented generation unfold — chunks, scores, and the context that reaches the model."
+}
