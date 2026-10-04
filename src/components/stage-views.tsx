@@ -24,7 +24,8 @@ import { DiagnosisPanel } from "./viz/diagnosis-panel";
 import { GroundedText } from "./viz/grounded-text";
 import { AnswerText } from "./viz/answer-text";
 import { ComparePanel } from "./viz/compare-panel";
-import { EvidenceCard, evidenceFromSpan, type Evidence } from "./viz/evidence-card";
+import { EvidenceCard } from "./viz/evidence-card";
+import { evidenceFromSpan, type Evidence } from "@/lib/rag/evidence";
 
 function Panel({
   title,
@@ -533,7 +534,7 @@ function TopKStage({
   if (pipe.topK.length === 0) {
     return (
       <Panel kicker="05 · Top-K" title="沒有可取回的切塊">
-        <Note>文件是空的，或切塊數為 0。</Note>
+        <Note>沒有與問題重疊的詞項，請改寫問題或加入相關文件。系統不會用零分片段填滿 Top-K。</Note>
       </Panel>
     );
   }

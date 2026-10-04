@@ -17,7 +17,10 @@ export function buildContext(chunks: RankedChunk[]): string {
   return chunks
     .map((r, i) => {
       const sim = r.similarity.toFixed(3);
-      return `[#${i + 1} · ${r.chunk.id} · sim ${sim}]\n${r.chunk.text.trim()}`;
+      // Indent every untrusted body line so document text cannot impersonate
+      // the source headers used to validate provider citations.
+      const body = r.chunk.text.trim().split(/\r?\n/).map((line) => `  ${line}`).join("\n");
+      return `[#${i + 1} · ${r.chunk.id} · sim ${sim}]\n${body}`;
     })
     .join("\n\n---\n\n");
 }
@@ -31,17 +34,15 @@ export function fingerprintOf(input: {
   ranker: Ranker;
   rerank: Rerank;
 }) {
-  return [
-    input.document.length,
+  return JSON.stringify([
+    input.document,
     input.chunkSize,
     input.overlap,
     input.topK,
     input.ranker,
     input.rerank,
     input.query.trim(),
-    input.document.slice(0, 80),
-    input.document.slice(-40),
-  ].join("|");
+  ]);
 }
 
 export function runPipeline(
@@ -55,6 +56,7 @@ export function runPipeline(
 ): PipelineResult {
   const chunks = chunkDocument(document, chunkSize, overlap);
   const { vectors, idf, vocabSize } = embedChunks(chunks);
+  const chunksById = new Map(chunks.map((c) => [c.id, c]));
   const byId = new Map(vectors.map((v) => [v.id, v]));
   const tokenDocs = vectors.map((v) => v.tokens);
   const df = documentFrequencies(tokenDocs);
@@ -82,7 +84,7 @@ export function runPipeline(
   const activeOrder = ranker === "bm25" ? byBm25 : byTfidf;
 
   const ranked: RankedChunk[] = activeOrder.map((s, i) => {
-    const chunk = chunks.find((c) => c.id === s.id)!;
+    const chunk = chunksById.get(s.id)!;
     const vector = byId.get(s.id)!;
     const similarity = ranker === "bm25" ? s.bm25Score / maxBm25 : s.tfidfScore;
     return {
@@ -98,9 +100,10 @@ export function runPipeline(
     };
   });
 
-  const k = Math.max(1, Math.min(topK, ranked.length || 1));
-  const greedy = queryVector ? ranked.slice(0, k) : [];
-  const mmrPicked = queryVector ? selectMmr(ranked, k) : [];
+  const k = Number.isFinite(topK) ? Math.max(0, Math.min(Math.floor(topK), ranked.length)) : 0;
+  const relevant = ranked.filter((r) => r.similarity > 0);
+  const greedy = queryVector ? relevant.slice(0, k) : [];
+  const mmrPicked = queryVector ? selectMmr(relevant, k) : [];
   const chosen = rerank === "mmr" ? mmrPicked : greedy;
   const pickOf = new Map(chosen.map((r, i) => [r.chunk.id, i + 1]));
   const rankedPicked = ranked.map((r) => ({
