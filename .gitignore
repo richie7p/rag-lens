@@ -15,7 +15,6 @@ screenshots/
 .project_id
 coverage/
 *.local
-public/__grok/
 AGENTS.md
 
 playwright-report/
