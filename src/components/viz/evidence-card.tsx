@@ -1,35 +1,9 @@
-import type { GroundSpan } from "@/lib/rag/ground";
 import { formatInt } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HighlightedText } from "./highlighted-text";
 
-export type Evidence = {
-  chunkId: string;
-  pick: number | null;
-  start: number;
-  end: number;
-  quote: string;
-  sentence: string;
-  reason: string;
-  coverage: number;
-  support: GroundSpan["support"];
-};
-
-export function evidenceFromSpan(span: GroundSpan, fallbackStart = 0, fallbackEnd = 0): Evidence | null {
-  if (!span.chunkId) return null;
-  return {
-    chunkId: span.chunkId,
-    pick: span.pick,
-    start: span.docStart ?? fallbackStart,
-    end: span.docEnd ?? fallbackEnd,
-    quote: span.quote ?? "",
-    sentence: span.text,
-    reason: span.reason,
-    coverage: span.coverage,
-    support: span.support,
-  };
-}
+import type { Evidence } from "@/lib/rag/evidence";
 
 export function EvidenceCard({
   evidence,

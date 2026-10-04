@@ -66,7 +66,7 @@ RAG 常被做成聊天框。Lens 把管線攤開：
 ## 本機執行
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -83,5 +83,10 @@ npm run build
 
 示範文件為虛構公司與產品，僅供 RAG 教學。請勿把真實個資貼進公開部署的實例。
 
-私人倉庫：[richie7p/rag-lens](https://github.com/richie7p/rag-lens)  
+GitHub 倉庫：[richie7p/rag-lens](https://github.com/richie7p/rag-lens)
 線上展示：<https://fern-lark-clover-forest.grok.me>
+
+
+## 技術稽核修正與測試
+
+[PDF 對照、重現步驟與驗證限制](docs/AUDIT-FOLLOWUP.md)

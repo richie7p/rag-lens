@@ -15,8 +15,8 @@ export function chunkDocument(
   chunkSize: number,
   overlap: number,
 ): Chunk[] {
-  const size = Math.max(60, Math.round(chunkSize));
-  const ov = clamp(Math.round(overlap), 0, size - 20);
+  const size = Number.isFinite(chunkSize) ? Math.max(60, Math.min(20_000, Math.round(chunkSize))) : 400;
+  const ov = clamp(Number.isFinite(overlap) ? Math.round(overlap) : 0, 0, size - 20);
   if (!text) return [];
 
   const chunks: Chunk[] = [];

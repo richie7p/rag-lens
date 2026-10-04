@@ -53,7 +53,7 @@ export function isFactualSentence(raw: string): boolean {
   const noMd = trimmed.replace(/^#{1,6}\s+/, "").replace(/\*\*/g, "").trim();
   if (/^#{1,6}\s/.test(trimmed) && noMd.length < 28) return false;
   const onlyCite = trimmed
-    .replace(/[#＃［\[\]］()（）\s,，、。．.：:來源參考注釋see\sref]/gi, "")
+    .replace(/[#＃［[\]］()（）\s,，、。．.：:來源參考注釋see\sref]/gi, "")
     .replace(/\d+/g, "");
   if (!onlyCite && /#\s*\d/.test(trimmed)) return false;
   if (/^(來源|參考|注)[:：]?\s*#?\d+\s*$/i.test(noMd)) return false;
@@ -81,7 +81,7 @@ export function extractNumbers(text: string): NumberClaim[] {
   const re = /\d+(?:\.\d+)?/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
-    if (m[0].length < 2) continue;
+    if (/[#＃]\s*$/.test(text.slice(0, m.index))) continue;
     out.push({
       raw: m[0],
       index: m.index,
@@ -181,9 +181,9 @@ export function groundAnswer(answer: string, topK: RankedChunk[]): GroundSpan[] 
       let hit = 0;
       for (const n of claims) {
         need += 1;
-        if (c.text.includes(n.raw)) hit += 1;
+        if (c.numbers.some((claim) => claim.raw === n.raw)) hit += 1;
       }
-      if (need > 0) cov = Math.max(cov, hit / need);
+      if (need > 0) cov = Math.min(cov, hit / need);
       if (cov > bestCov) {
         bestCov = cov;
         bestId = c.id;
@@ -204,6 +204,7 @@ export function groundAnswer(answer: string, topK: RankedChunk[]): GroundSpan[] 
       }
     }
 
+    const unsupportedNumbers = claims.filter((claim) => !bestChunk?.numbers.some((n) => n.raw === claim.raw));
     let support: Support = "none";
     let reason = "這句在 Top-K 裡找不到對應數字或足夠詞項。";
     if (conflict && bestChunk) {
@@ -211,6 +212,9 @@ export function groundAnswer(answer: string, topK: RankedChunk[]): GroundSpan[] 
       reason = conflictReason(conflict.claim, conflict.other);
       bestId = bestChunk.id;
       bestPick = bestChunk.pick || null;
+    } else if (unsupportedNumbers.length > 0) {
+      support = bestCov >= 0.14 ? "weak" : "none";
+      reason = `來源缺少數字 ${unsupportedNumbers.map((n) => n.raw).join("、")}，這句只有部分依據，不能視為完整支持。`;
     } else if (bestCov >= 0.34) {
       support = "strong";
       reason =

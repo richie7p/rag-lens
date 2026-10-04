@@ -15,5 +15,15 @@ screenshots/
 .project_id
 coverage/
 *.local
-public/__grok/
 AGENTS.md
+
+playwright-report/
+test-results/
+
+.vercel/
+.output/
+.nitro/
+.tanstack/
+dist/
+.grok/preview.log
+.grok/status
